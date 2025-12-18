@@ -34,12 +34,22 @@ The training script `cnnTrainer.py` is used to train the CNN.
 To run the training on the demo data:
 
 ```bash
+# Ensure you are in the virtual environment
+source .venv/bin/activate
 python -m Sign_processing.cnnTrainer train
 ```
 
-### Training on the Full Dataset
+### Training on the Full Dataset (Finalboss)
 
-To train on the full dataset generated in `Finalboss/`, you need to:
+To train on the full dataset generated in `Finalboss/`, use the dedicated trainer script:
+
+```bash
+# Ensure you are in the virtual environment
+source .venv/bin/activate
+python -m Sign_processing.cnnTrainerFinalboss train
+```
+
+This script is pre-configured to use the `Finalboss` directory and handles the training process for the full dataset.
 
 1.  **Split the data**: Organize the `Finalboss` folder into training and validation sets. You should create a structure like:
     ```
