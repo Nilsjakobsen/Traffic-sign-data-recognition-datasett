@@ -27,6 +27,7 @@ import numpy as np
 SIGNS_PER_MAP = 10     # Number of signs to place on each map
 PADDING = 2            # Extra pixels around each crop
 OUTPUT_SIZE = 128      # Resize all crops to this size (128x128) for ML training
+ROTATION_RANGE = (-180, 180)  # Full rotation range (degrees)
 # ==============================
 
 # ---------- Paths ----------
@@ -72,6 +73,32 @@ def resize_sign(sign: np.ndarray, size: int) -> np.ndarray:
     scale = size / max(h, w)
     new_w, new_h = int(w * scale), int(h * scale)
     return cv2.resize(sign, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+
+def rotate_sign(sign: np.ndarray, angle: float) -> np.ndarray:
+    """Rotate sign by angle degrees, keeping alpha channel and expanding canvas to fit."""
+    h, w = sign.shape[:2]
+    
+    # Calculate new bounding box size after rotation (works for any angle)
+    angle_rad = np.deg2rad(angle)
+    cos_a = abs(np.cos(angle_rad))
+    sin_a = abs(np.sin(angle_rad))
+    new_w = int(np.ceil(w * cos_a + h * sin_a))
+    new_h = int(np.ceil(h * cos_a + w * sin_a))
+    
+    # Rotation matrix around center of original image
+    center = (w / 2, h / 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    
+    # Adjust translation to center rotated image in new canvas
+    M[0, 2] += (new_w - w) / 2
+    M[1, 2] += (new_h - h) / 2
+    
+    # Rotate with transparent background (0,0,0,0)
+    rotated = cv2.warpAffine(sign, M, (new_w, new_h), 
+                              borderMode=cv2.BORDER_CONSTANT, 
+                              borderValue=(0, 0, 0, 0))
+    return rotated
 
 
 def paste_sign(map_img: np.ndarray, sign_img: np.ndarray, x: int, y: int) -> np.ndarray:
@@ -152,6 +179,11 @@ def process_sign(sign_path: Path, maps: list, signs_per_map: int):
         for _ in range(signs_per_map):
             size = random.choice(SIGN_SIZES)
             resized = resize_sign(sign, size)
+            
+            # Random rotation
+            angle = random.uniform(*ROTATION_RANGE)
+            resized = rotate_sign(resized, angle)
+            
             sh, sw = resized.shape[:2]
             
             x, y = find_non_overlapping_position(result.shape, resized.shape, placed_signs)

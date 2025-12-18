@@ -5,8 +5,30 @@ __pycache__/
 .venv/
 venv/
 env/
+.env
 
 # Model weights
 *.pth
 *.pt
 *.ckpt
+
+# VS Code
+.vscode/
+
+# Images and Data
+base-images/
+Finalboss/
+Map-pictures/
+Map-with-signs/
+cleaned_signs_lovdata/
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tiff
+*.tif
+*.gif
+
+# OS generated files
+.DS_Store
+Thumbs.db

@@ -26,9 +26,9 @@ AUGMENTATIONS_PER_IMAGE = 30       # Number of augmented versions per base image
 RANDOM_SEED = 1337                 # For reproducibility
 
 # Augmentation parameters
-ROTATION_RANGE = (-180, 180)       # Full rotation (all angles)
-SCALE_MIN, SCALE_MAX = 0.80, 1.20  # Scale range (wider)
-SHIFT_PX = 8                       # Max shift in pixels
+ROTATION_RANGE = (-10, 10)         # Small rotation to avoid edge artifacts
+SCALE_MIN, SCALE_MAX = 0.95, 1.05  # Minimal scale to avoid edge artifacts
+SHIFT_PX = 2                       # Minimal shift
 BRIGHT_ALPHA = (0.70, 1.30)        # Brightness/contrast alpha range (wider)
 BRIGHT_BETA = (-15, 15)            # Brightness beta range (wider)
 BLUR_P = 0.4                       # Probability of blur
@@ -36,7 +36,7 @@ BLUR_KERNELS = [3, 5, 7]           # Blur kernel sizes (added 7)
 NOISE_P = 0.4                      # Probability of noise
 NOISE_STD = 10.0                   # Noise standard deviation
 HSV_JITTER_P = 0.6                 # Probability of HSV jitter
-PERSPECTIVE_P = 0.3                # Probability of perspective transform
+PERSPECTIVE_P = 0.2                # Reduced probability of perspective transform
 # ==============================
 
 # ---------- Paths ----------
@@ -129,8 +129,8 @@ def maybe_perspective(img):
     """Maybe apply perspective transform to simulate viewing angle."""
     if random.random() < PERSPECTIVE_P:
         h, w = img.shape[:2]
-        # Random perspective shift (small)
-        shift = int(w * 0.08)
+        # Random perspective shift (very small)
+        shift = int(w * 0.03)
         pts1 = np.float32([[0, 0], [w, 0], [0, h], [w, h]])
         pts2 = np.float32([
             [random.randint(0, shift), random.randint(0, shift)],
@@ -159,15 +159,16 @@ def augment_image(img):
     """Apply random augmentations to an image."""
     aug = img.copy()
     
-    # Apply augmentations in sequence
+    # Geometric transforms (small values to minimize edge artifacts)
     aug = random_rotation(aug)
     aug = random_affine(aug)
     aug = maybe_perspective(aug)
+    
+    # Color/texture augmentations
     aug = random_brightness_contrast(aug)
     aug = maybe_hsv_jitter(aug)
     aug = maybe_blur(aug)
     aug = maybe_noise(aug)
-    # Note: Not flipping traffic signs as some are directional
     
     # Ensure correct size
     aug = resize_to_target(aug, TARGET_SIZE)
