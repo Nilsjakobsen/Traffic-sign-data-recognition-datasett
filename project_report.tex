@@ -3,6 +3,10 @@
 \usepackage{geometry}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
 
 \geometry{a4paper, margin=1in}
 
@@ -18,17 +22,50 @@
 This project aims to develop a robust traffic sign recognition system using a Convolutional Neural Network (CNN). The core of our approach lies in generating a high-quality, synthetic dataset that mimics real-world conditions, allowing us to train a model capable of recognizing over 300 distinct classes of Norwegian traffic signs.
 
 \section{Dataset Generation Pipeline}
-We created a custom pipeline to generate a massive dataset from a set of clean, transparent traffic sign images (\texttt{cleaned\_signs\_lovdata}).
+We created a custom pipeline to generate a massive dataset from a set of clean, transparent traffic sign images (\texttt{cleaned\_signs\_lovdata}). The process involves two main stages: Map Composition and Augmentation.
+
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{pipeline_overview.png}
+    \caption{Overview of the Data Generation Pipeline}
+    \label{fig:pipeline}
+\end{figure}
 
 \subsection{Step 1: Map Composition (\texttt{run\_all\_signs.py})}
 To ensure the model learns to recognize signs in their natural context, we composite the clean sign images onto random map backgrounds.
+
 \begin{itemize}
-    \item \textbf{Process}: We take a clean sign and paste it onto various map images.
-    \item \textbf{Output}: This creates "base images" where the sign is embedded in a realistic background, rather than a plain white or black background. This helps the model distinguish the sign from complex surroundings.
+    \item \textbf{Input}: 331 unique clean traffic sign images.
+    \item \textbf{Backgrounds}: 15 different map images representing various environments (urban, rural, etc.).
+    \item \textbf{Process}: Each sign is pasted onto every map image 10 times at random positions.
+    \item \textbf{Output}: This results in approximately 5 \times 10 = 150$ "base images" per sign class. These images feature the sign embedded in a realistic background, rather than a plain white or black background. This helps the model distinguish the sign from complex surroundings.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        % \includegraphics[width=\textwidth]{clean_sign.png}
+        \caption{Clean Sign Input}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        % \includegraphics[width=\textwidth]{map_composite.png}
+        \caption{Sign Composited on Map}
+    \end{subfigure}
+    \caption{Map Composition Process}
+    \label{fig:composition}
+\end{figure}
 
 \subsection{Step 2: Augmentation (\texttt{augment\_all.py})}
 The base images are then passed through an extensive augmentation pipeline to create the final training set (\texttt{Finalboss}). This step is crucial for making the model invariant to changes in lighting, orientation, and quality.
+
+\begin{itemize}
+    \item \textbf{Multiplier}: Each base image is augmented 30 times.
+    \item \textbf{Total Images per Class}: 50 \text{ base images} \times 30 \text{ augmentations} \approx 4,500$ images per class.
+    \item \textbf{Total Dataset Size}: With 331 classes, the total dataset contains approximately \textbf{1.5 million images} (,537,197$ total samples).
+\end{itemize}
 
 \textbf{Key Augmentations:}
 \begin{enumerate}
@@ -51,6 +88,29 @@ The base images are then passed through an extensive augmentation pipeline to cr
     \end{itemize}
 \end{enumerate}
 
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        % \includegraphics[width=\textwidth]{aug_rotate.png}
+        \caption{Rotation \& Scale}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        % \includegraphics[width=\textwidth]{aug_blur.png}
+        \caption{Blur \& Noise}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        % \includegraphics[width=\textwidth]{aug_shadow.png}
+        \caption{Shadow \& Lighting}
+    \end{subfigure}
+    \caption{Examples of Applied Augmentations}
+    \label{fig:augmentations}
+\end{figure}
+
 \section{Model Architecture}
 We utilize a custom Convolutional Neural Network (CNN) designed for this specific task.
 
@@ -58,7 +118,7 @@ We utilize a custom Convolutional Neural Network (CNN) designed for this specifi
     \item \textbf{Input}: 128x128 pixel RGB images.
     \item \textbf{Architecture}:
     \begin{itemize}
-        \item \textbf{Convolutional Layers}: 4 layers with increasing filter sizes ($32 \rightarrow 64 \rightarrow 128 \rightarrow 128$) to capture hierarchical features (edges $\rightarrow$ shapes $\rightarrow$ complex patterns).
+        \item \textbf{Convolutional Layers}: 4 layers with increasing filter sizes (2 \rightarrow 64 \rightarrow 128 \rightarrow 128$) to capture hierarchical features (edges $\rightarrow$ shapes $\rightarrow$ complex patterns).
         \item \textbf{Pooling}: Max pooling layers to reduce spatial dimensions and provide translation invariance.
         \item \textbf{Fully Connected Layers}: Two dense layers to map the extracted features to the 300+ class probabilities.
         \item \textbf{Dropout}: Applied to prevent overfitting.
